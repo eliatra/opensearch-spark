@@ -8,6 +8,7 @@ package org.opensearch.flint.spark.ppl
 import org.opensearch.flint.spark.ppl.PlaneUtils.plan
 import org.opensearch.sql.ppl.{CatalystPlanContext, CatalystQueryPlanVisitor}
 import org.scalatest.matchers.should.Matchers
+
 import org.apache.spark.SparkFunSuite
 import org.apache.spark.sql.catalyst.analysis.{UnresolvedAttribute, UnresolvedFunction, UnresolvedRelation, UnresolvedStar}
 import org.apache.spark.sql.catalyst.expressions.{Alias, Ascending, Divide, EqualTo, Floor, GreaterThan, GreaterThanOrEqual, Literal, Multiply, SortOrder, TimeWindow}
