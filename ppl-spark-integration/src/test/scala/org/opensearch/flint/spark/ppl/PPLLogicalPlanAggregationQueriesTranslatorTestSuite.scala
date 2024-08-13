@@ -375,7 +375,10 @@ class PPLLogicalPlanAggregationQueriesTranslatorTestSuite
   test("test distinct count product group by brand sorted") {
     val context = new CatalystPlanContext
     val logPlan = planTransformer.visit(
-      plan(pplParser, "source = table | stats distinct_count(product) by brand | sort brand", false),
+      plan(
+        pplParser,
+        "source = table | stats distinct_count(product) by brand | sort brand",
+        false),
       context)
     val star = Seq(UnresolvedStar(None))
     val brandField = UnresolvedAttribute("brand")
@@ -384,16 +387,15 @@ class PPLLogicalPlanAggregationQueriesTranslatorTestSuite
 
     val groupByAttributes = Seq(Alias(brandField, "brand")())
     val aggregateExpressions =
-      Alias(UnresolvedFunction(Seq("COUNT"), Seq(productField), isDistinct = true), "distinct_count(product)")()
+      Alias(
+        UnresolvedFunction(Seq("COUNT"), Seq(productField), isDistinct = true),
+        "distinct_count(product)")()
     val brandAlias = Alias(brandField, "brand")()
 
     val aggregatePlan =
       Aggregate(groupByAttributes, Seq(aggregateExpressions, brandAlias), tableRelation)
     val sortedPlan: LogicalPlan =
-      Sort(
-        Seq(SortOrder(brandField, Ascending)),
-        global = true,
-        aggregatePlan)
+      Sort(Seq(SortOrder(brandField, Ascending)), global = true, aggregatePlan)
     val expectedPlan = Project(star, sortedPlan)
 
     comparePlans(expectedPlan, logPlan, false)
@@ -402,7 +404,10 @@ class PPLLogicalPlanAggregationQueriesTranslatorTestSuite
   test("test distinct count product with alias and filter") {
     val context = new CatalystPlanContext
     val logPlan = planTransformer.visit(
-      plan(pplParser, "source = table price > 100 | stats distinct_count(product) as dc_product", false),
+      plan(
+        pplParser,
+        "source = table price > 100 | stats distinct_count(product) as dc_product",
+        false),
       context)
     val star = Seq(UnresolvedStar(None))
     val productField = UnresolvedAttribute("product")
@@ -410,7 +415,9 @@ class PPLLogicalPlanAggregationQueriesTranslatorTestSuite
     val tableRelation = UnresolvedRelation(Seq("table"))
 
     val aggregateExpressions = Seq(
-      Alias(UnresolvedFunction(Seq("COUNT"), Seq(productField), isDistinct = true), "dc_product")())
+      Alias(
+        UnresolvedFunction(Seq("COUNT"), Seq(productField), isDistinct = true),
+        "dc_product")())
     val filterExpr = GreaterThan(priceField, Literal(100))
     val filterPlan = Filter(filterExpr, tableRelation)
     val aggregatePlan = Aggregate(Seq(), aggregateExpressions, filterPlan)
@@ -433,7 +440,9 @@ class PPLLogicalPlanAggregationQueriesTranslatorTestSuite
     val tableRelation = UnresolvedRelation(Seq("table"))
 
     val aggregateExpressions =
-      Alias(UnresolvedFunction(Seq("COUNT"), Seq(ageField), isDistinct = true), "distinct_count(age)")()
+      Alias(
+        UnresolvedFunction(Seq("COUNT"), Seq(ageField), isDistinct = true),
+        "distinct_count(age)")()
     val span = Alias(
       Multiply(Floor(Divide(UnresolvedAttribute("age"), Literal(10))), Literal(10)),
       "age_span")()

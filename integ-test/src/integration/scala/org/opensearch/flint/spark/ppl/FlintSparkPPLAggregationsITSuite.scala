@@ -446,7 +446,9 @@ class FlintSparkPPLAggregationsITSuite
 
     val groupByAttributes = Seq(Alias(countryField, "country")())
     val aggregateExpressions =
-      Alias(UnresolvedFunction(Seq("COUNT"), Seq(ageField), isDistinct = true), "distinct_count(age)")()
+      Alias(
+        UnresolvedFunction(Seq("COUNT"), Seq(ageField), isDistinct = true),
+        "distinct_count(age)")()
     val productAlias = Alias(countryField, "country")()
 
     val aggregatePlan =
@@ -491,9 +493,12 @@ class FlintSparkPPLAggregationsITSuite
     val filterExpr = Not(EqualTo(stateField, Literal("Ontario")))
     val filterPlan = Filter(filterExpr, table)
     val aggregateExpressions =
-      Alias(UnresolvedFunction(Seq("COUNT"), Seq(ageField), isDistinct = true), "distinct_count(age)")()
+      Alias(
+        UnresolvedFunction(Seq("COUNT"), Seq(ageField), isDistinct = true),
+        "distinct_count(age)")()
     val productAlias = Alias(countryField, "country")()
-    val aggregatePlan = Aggregate(groupByAttributes, Seq(aggregateExpressions, productAlias), filterPlan)
+    val aggregatePlan =
+      Aggregate(groupByAttributes, Seq(aggregateExpressions, productAlias), filterPlan)
     val expectedPlan = Project(star, aggregatePlan)
 
     // Compare the two plans

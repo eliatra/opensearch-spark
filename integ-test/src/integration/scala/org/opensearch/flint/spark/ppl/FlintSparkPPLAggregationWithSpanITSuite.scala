@@ -270,7 +270,8 @@ class FlintSparkPPLAggregationWithSpanITSuite
    * | 30       |         1 |
    * | 70       |         1 |
    */
-  test("create ppl simple distinct count age by span of interval of 10 years query with state filter test ") {
+  test(
+    "create ppl simple distinct count age by span of interval of 10 years query with state filter test ") {
     val frame = sql(s"""
                        | source = $testTable | where state != 'Quebec' | stats distinct_count(age) by span(age, 10) as age_span
                        | """.stripMargin)
@@ -293,7 +294,9 @@ class FlintSparkPPLAggregationWithSpanITSuite
     val table = UnresolvedRelation(Seq("spark_catalog", "default", "flint_ppl_test"))
 
     val aggregateExpressions =
-      Alias(UnresolvedFunction(Seq("COUNT"), Seq(ageField), isDistinct = true), "distinct_count(age)")()
+      Alias(
+        UnresolvedFunction(Seq("COUNT"), Seq(ageField), isDistinct = true),
+        "distinct_count(age)")()
     val span = Alias(
       Multiply(Floor(Divide(UnresolvedAttribute("age"), Literal(10))), Literal(10)),
       "age_span")()
