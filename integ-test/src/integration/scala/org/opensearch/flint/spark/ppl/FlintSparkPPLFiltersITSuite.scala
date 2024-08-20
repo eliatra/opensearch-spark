@@ -60,6 +60,20 @@ class FlintSparkPPLFiltersITSuite
     assert(compareByString(expectedPlan) === compareByString(logicalPlan))
   }
 
+  test("create ppl simple age literal equal filter query with type casting") {
+    val frame = sql(s"""
+         | source = $testTable age=25 and 25=25.0 | fields name, age
+         | """.stripMargin)
+
+    // Retrieve the results
+    val results: Array[Row] = frame.collect()
+    // Define the expected results
+    val expectedResults: Array[Row] = Array(Row("John", 25))
+    // Compare the results
+    implicit val rowOrdering: Ordering[Row] = Ordering.by[Row, String](_.getAs[String](0))
+    assert(results.sorted.sameElements(expectedResults.sorted))
+  }
+
   test(
     "create ppl simple age literal greater than filter AND country not equal filter query with two fields result test") {
     val frame = sql(s"""
