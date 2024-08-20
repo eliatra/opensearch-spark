@@ -260,4 +260,56 @@ class FlintSparkPPLBasicITSuite
         assert(compareByString(expectedPlan) === compareByString(logicalPlan))
     }
   }
+
+  test("create ppl simple query with renaming fields test") {
+    val frame = sql(s"""
+                           | source = $testTable | rename country as thecountry
+                           | """.stripMargin)
+
+    // Retrieve the results
+    val results: Array[Row] = frame.collect()
+    assert(results.length == 4)
+    assert(frame.columns.length == 6)
+
+    // Retrieve the logical plan
+    val logicalPlan: LogicalPlan = frame.queryExecution.logical
+    val project = Project(
+      Seq(UnresolvedAttribute("name"), UnresolvedAttribute("age")),
+      UnresolvedRelation(Seq("spark_catalog", "default", "flint_ppl_test")))
+    // Define the expected logical plan
+    val limitPlan: LogicalPlan = Limit(Literal(1), project)
+    val sortedPlan: LogicalPlan =
+      Sort(Seq(SortOrder(UnresolvedAttribute("age"), Ascending)), global = true, limitPlan)
+
+    val expectedPlan = Project(Seq(UnresolvedStar(None)), sortedPlan)
+    // Compare the two plans
+    assert(compareByString(expectedPlan) === compareByString(logicalPlan))
+
+  }
+
+  test("create ppl simple query with renaming preselected fields test") {
+    val frame = sql(s"""
+                       | source = $testTable | fields age,country | rename country as thecountry
+                       | """.stripMargin)
+
+    // Retrieve the results
+    val results: Array[Row] = frame.collect()
+    assert(results.length == 4)
+    assert(frame.columns.length == 2)
+
+    // Retrieve the logical plan
+    val logicalPlan: LogicalPlan = frame.queryExecution.logical
+    val project = Project(
+      Seq(UnresolvedAttribute("name"), UnresolvedAttribute("age")),
+      UnresolvedRelation(Seq("spark_catalog", "default", "flint_ppl_test")))
+    // Define the expected logical plan
+    val limitPlan: LogicalPlan = Limit(Literal(1), project)
+    val sortedPlan: LogicalPlan =
+      Sort(Seq(SortOrder(UnresolvedAttribute("age"), Ascending)), global = true, limitPlan)
+
+    val expectedPlan = Project(Seq(UnresolvedStar(None)), sortedPlan)
+    // Compare the two plans
+    assert(compareByString(expectedPlan) === compareByString(logicalPlan))
+
+  }
 }

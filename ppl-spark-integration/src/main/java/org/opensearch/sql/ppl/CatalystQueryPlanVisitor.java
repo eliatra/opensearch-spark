@@ -39,6 +39,7 @@ import org.opensearch.sql.ast.expression.In;
 import org.opensearch.sql.ast.expression.Interval;
 import org.opensearch.sql.ast.expression.Let;
 import org.opensearch.sql.ast.expression.Literal;
+import org.opensearch.sql.ast.expression.Map;
 import org.opensearch.sql.ast.expression.Not;
 import org.opensearch.sql.ast.expression.Or;
 import org.opensearch.sql.ast.expression.ParseMethod;
@@ -63,6 +64,7 @@ import org.opensearch.sql.ast.tree.Project;
 import org.opensearch.sql.ast.tree.RareAggregation;
 import org.opensearch.sql.ast.tree.RareTopN;
 import org.opensearch.sql.ast.tree.Relation;
+import org.opensearch.sql.ast.tree.Rename;
 import org.opensearch.sql.ast.tree.Sort;
 import org.opensearch.sql.ast.tree.TopAggregation;
 import org.opensearch.sql.ppl.utils.AggregatorTranslator;
@@ -369,6 +371,70 @@ public class CatalystQueryPlanVisitor extends AbstractNodeVisitor<LogicalPlan, C
                 return retainMultipleDuplicateEvents(node, allowedDuplication, expressionAnalyzer, context);
             }
         }
+    }
+
+    @Override
+    public LogicalPlan visitRename(Rename node, CatalystPlanContext context) {
+        node.getChild().get(0).accept(this, context);
+
+        //TODO getNamedParseExpressions() seems always empty
+        if (context.getNamedParseExpressions().isEmpty()) {
+            //TODO this leads to the issues that the original field remains in the result
+            context.getNamedParseExpressions().push(UnresolvedStar$.MODULE$.apply(Option.<Seq<String>>empty()));
+        }
+
+        for (Map renameCol: node.getRenameList()) {
+            Field targetField =  (Field) renameCol.getTarget();
+
+            //TODO Will getField().toString() also work with full qualified field names?
+            visitAlias(new Alias(targetField.getField().toString(), renameCol.getOrigin()), context);
+        }
+
+        return context.getPlan();
+    }
+
+    private Expression buildIsNotNullFilterExpression(Dedupe node, CatalystPlanContext context) {
+        visitFieldList(node.getFields(), context);
+        Seq<Expression> isNotNullExpressions =
+            context.retainAllNamedParseExpressions(
+                org.apache.spark.sql.catalyst.expressions.IsNotNull$.MODULE$::apply);
+
+        Expression isNotNullExpr;
+        if (isNotNullExpressions.size() == 1) {
+            isNotNullExpr = isNotNullExpressions.apply(0);
+        } else {
+            isNotNullExpr = isNotNullExpressions.reduce(
+                new scala.Function2<Expression, Expression, Expression>() {
+                    @Override
+                    public Expression apply(Expression e1, Expression e2) {
+                        return new org.apache.spark.sql.catalyst.expressions.And(e1, e2);
+                    }
+                }
+            );
+        }
+        return isNotNullExpr;
+    }
+
+    private Expression buildIsNullFilterExpression(Dedupe node, CatalystPlanContext context) {
+        visitFieldList(node.getFields(), context);
+        Seq<Expression> isNullExpressions =
+            context.retainAllNamedParseExpressions(
+                org.apache.spark.sql.catalyst.expressions.IsNull$.MODULE$::apply);
+
+        Expression isNullExpr;
+        if (isNullExpressions.size() == 1) {
+            isNullExpr = isNullExpressions.apply(0);
+        } else {
+            isNullExpr = isNullExpressions.reduce(
+                new scala.Function2<Expression, Expression, Expression>() {
+                    @Override
+                    public Expression apply(Expression e1, Expression e2) {
+                        return new org.apache.spark.sql.catalyst.expressions.Or(e1, e2);
+                    }
+                }
+            );
+        }
+        return isNullExpr;
     }
 
     /**

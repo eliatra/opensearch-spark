@@ -44,6 +44,7 @@ commands
    | grokCommand
    | parseCommand
    | patternsCommand
+   | renameCommand
    ;
 
 searchCommand
@@ -91,7 +92,7 @@ fieldsCommand
    ;
 
 renameCommand
-   : RENAME renameClasue (COMMA renameClasue)*
+   : RENAME renameClause (COMMA renameClause)*
    ;
 
 statsCommand
@@ -191,7 +192,7 @@ tableSourceClause
    : tableSource (COMMA tableSource)*
    ;
 
-renameClasue
+renameClause
    : orignalField = wcFieldExpression AS renamedField = wcFieldExpression
    ;
 
