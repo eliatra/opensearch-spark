@@ -82,6 +82,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 import static java.util.List.of;
@@ -265,10 +266,23 @@ public class CatalystQueryPlanVisitor extends AbstractNodeVisitor<LogicalPlan, C
     public LogicalPlan visitIsPresent(IsPresent node, CatalystPlanContext context) {
         node.getChild().get(0).accept(this, context);
         return context.apply(p -> {
-            visitExpression(node.getPresentField(), context); // add name expression to context
-            Expression fieldExpression = context.popNamedParseExpressions().get(); // pops parsed expression from the context
-            return new org.apache.spark.sql.catalyst.plans.logical.Filter(new IsNotNull(fieldExpression), p);
+            //  1 is not null
+            Expression identity = new IsNotNull(new org.apache.spark.sql.catalyst.expressions.Literal(1, DataTypes.IntegerType));
+            Expression filterExpression = visitFieldsAndPop(node.getPresentField(), context)
+                    .map(IsNotNull::new)
+                    .map(Expression.class::cast)
+                    .reduce(identity, org.apache.spark.sql.catalyst.expressions.And::new);
+            return new org.apache.spark.sql.catalyst.plans.logical.Filter(filterExpression, p);
         });
+    }
+
+    private Stream<Expression> visitFieldsAndPop(List<Field> fieldList, CatalystPlanContext context) {
+        List<Expression> expressions = new ArrayList<>();
+        for(Field field : fieldList) {
+            visitExpression(field, context);
+            expressions.add(context.popNamedParseExpressions().get()); // remove from context
+        }
+        return expressions.stream();
     }
 
     @Override

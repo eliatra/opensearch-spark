@@ -92,7 +92,7 @@ fieldsCommand
    ;
 
 isPresentCommand
-  : IS_PRESENT fieldExpression
+  : IS_PRESENT fieldList
   ;
 
 renameCommand

@@ -140,8 +140,8 @@ public class AstBuilder extends OpenSearchPPLParserBaseVisitor<UnresolvedPlan> {
 
   @Override
   public UnresolvedPlan visitIsPresentCommand(OpenSearchPPLParser.IsPresentCommandContext ctx) {
-    Field field = (Field) internalVisitExpression(ctx.fieldExpression());
-    return new IsPresent(field);
+    List<Field> fields = ctx.fieldList().fieldExpression().stream().map(field -> (Field) internalVisitExpression(field)).collect(Collectors.toList());
+    return new IsPresent(fields);
   }
 
   /** Rename command. */
