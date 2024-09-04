@@ -35,6 +35,7 @@ NEW_FIELD:                          'NEW_FIELD';
 KMEANS:                             'KMEANS';
 AD:                                 'AD';
 ML:                                 'ML';
+IS_PRESENT:                         'IS_PRESENT';
 
 //CORRELATION KEYWORDS
 CORRELATE:                          'CORRELATE';

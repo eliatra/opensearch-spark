@@ -38,7 +38,7 @@ import org.opensearch.sql.ast.tree.Kmeans;
 import org.opensearch.sql.ast.tree.Parse;
 import org.opensearch.sql.ast.tree.Project;
 import org.opensearch.sql.ast.tree.RareAggregation;
-import org.opensearch.sql.ast.tree.RareTopN;
+import org.opensearch.sql.ast.tree.IsPresent;
 import org.opensearch.sql.ast.tree.Relation;
 import org.opensearch.sql.ast.tree.Rename;
 import org.opensearch.sql.ast.tree.Sort;
@@ -136,6 +136,12 @@ public class AstBuilder extends OpenSearchPPLParserBaseVisitor<UnresolvedPlan> {
             .map(this::internalVisitExpression)
             .collect(Collectors.toList()),
         ArgumentFactory.getArgumentList(ctx));
+  }
+
+  @Override
+  public UnresolvedPlan visitIsPresentCommand(OpenSearchPPLParser.IsPresentCommandContext ctx) {
+    Field field = (Field) internalVisitExpression(ctx.fieldExpression());
+    return new IsPresent(field);
   }
 
   /** Rename command. */

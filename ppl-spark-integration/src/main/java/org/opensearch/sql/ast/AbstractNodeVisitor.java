@@ -51,6 +51,7 @@ import org.opensearch.sql.ast.tree.Rename;
 import org.opensearch.sql.ast.tree.Sort;
 import org.opensearch.sql.ast.tree.TableFunction;
 import org.opensearch.sql.ast.tree.Values;
+import org.opensearch.sql.ast.tree.IsPresent;
 
 /** AST nodes visitor Defines the traverse path. */
 public abstract class AbstractNodeVisitor<T, C> {
@@ -177,6 +178,10 @@ public abstract class AbstractNodeVisitor<T, C> {
   }
 
   public T visitField(Field node, C context) {
+    return visitChildren(node, context);
+  }
+
+  public T visitIsPresent(IsPresent node, C context) {
     return visitChildren(node, context);
   }
 

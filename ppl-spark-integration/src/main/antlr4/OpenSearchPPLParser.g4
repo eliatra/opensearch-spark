@@ -34,6 +34,7 @@ commands
    : whereCommand
    | correlateCommand
    | fieldsCommand
+   | isPresentCommand
    | statsCommand
    | dedupCommand
    | sortCommand
@@ -89,6 +90,10 @@ mappingClause
 fieldsCommand
    : FIELDS (PLUS | MINUS)? fieldList
    ;
+
+isPresentCommand
+  : IS_PRESENT fieldExpression
+  ;
 
 renameCommand
    : RENAME renameClasue (COMMA renameClasue)*
@@ -829,6 +834,7 @@ keywordsCanBeId
    | WHERE
    | CORRELATE
    | FIELDS
+   | IS_PRESENT
    | RENAME
    | STATS
    | DEDUP

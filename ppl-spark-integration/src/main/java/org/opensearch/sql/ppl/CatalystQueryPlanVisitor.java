@@ -16,6 +16,7 @@ import org.apache.spark.sql.catalyst.expressions.NamedExpression;
 import org.apache.spark.sql.catalyst.expressions.Predicate;
 import org.apache.spark.sql.catalyst.expressions.SortDirection;
 import org.apache.spark.sql.catalyst.expressions.SortOrder;
+import org.apache.spark.sql.catalyst.expressions.IsNotNull;
 import org.apache.spark.sql.catalyst.plans.logical.Aggregate;
 import org.apache.spark.sql.catalyst.plans.logical.DescribeRelation$;
 import org.apache.spark.sql.catalyst.plans.logical.Limit;
@@ -65,6 +66,7 @@ import org.opensearch.sql.ast.tree.RareTopN;
 import org.opensearch.sql.ast.tree.Relation;
 import org.opensearch.sql.ast.tree.Sort;
 import org.opensearch.sql.ast.tree.TopAggregation;
+import org.opensearch.sql.ast.tree.IsPresent;
 import org.opensearch.sql.ppl.utils.AggregatorTranslator;
 import org.opensearch.sql.ppl.utils.BuiltinFunctionTranslator;
 import org.opensearch.sql.ppl.utils.ComparatorTransformer;
@@ -257,6 +259,16 @@ public class CatalystQueryPlanVisitor extends AbstractNodeVisitor<LogicalPlan, C
         visitFieldList(node.getSortList(), context);
         Seq<SortOrder> sortElements = context.retainAllNamedParseExpressions(exp -> SortUtils.getSortDirection(node, (NamedExpression) exp));
         return context.apply(p -> (LogicalPlan) new org.apache.spark.sql.catalyst.plans.logical.Sort(sortElements, true, p));
+    }
+
+    @Override
+    public LogicalPlan visitIsPresent(IsPresent node, CatalystPlanContext context) {
+        node.getChild().get(0).accept(this, context);
+        return context.apply(p -> {
+            visitExpression(node.getPresentField(), context); // add name expression to context
+            Expression fieldExpression = context.popNamedParseExpressions().get(); // pops parsed expression from the context
+            return new org.apache.spark.sql.catalyst.plans.logical.Filter(new IsNotNull(fieldExpression), p);
+        });
     }
 
     @Override
