@@ -147,9 +147,18 @@ patternsMethod
    ;
 
 fillnullCommand
-   : FILLNULL ( VALUE EQUAL nullReplacement nullableField* )
-   | (nullableField EQUAL nullReplacement (COMMA nullableField EQUAL nullReplacement)*)
+   : FILLNULL ( fillNullWithTheSameValue )
+   | (fillNullWithFieldVariousValues)
    ;
+
+ fillNullWithTheSameValue
+ : VALUE EQUAL nullReplacement nullableField*
+ ;
+
+ fillNullWithFieldVariousValues
+ : nullableField EQUAL nullReplacement (COMMA nullableField EQUAL nullReplacement)*
+ ;
+
 
    nullableField
    : fieldExpression

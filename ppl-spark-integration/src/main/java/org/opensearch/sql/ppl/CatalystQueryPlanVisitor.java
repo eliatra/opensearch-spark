@@ -7,6 +7,7 @@ package org.opensearch.sql.ppl;
 
 import org.apache.spark.sql.catalyst.TableIdentifier;
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute$;
+import org.apache.spark.sql.catalyst.analysis.UnresolvedFunction;
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation;
 import org.apache.spark.sql.catalyst.analysis.UnresolvedStar$;
 import org.apache.spark.sql.catalyst.expressions.Ascending$;
@@ -53,23 +54,7 @@ import org.opensearch.sql.ast.expression.Xor;
 import org.opensearch.sql.ast.statement.Explain;
 import org.opensearch.sql.ast.statement.Query;
 import org.opensearch.sql.ast.statement.Statement;
-import org.opensearch.sql.ast.tree.Aggregation;
-import org.opensearch.sql.ast.tree.Correlation;
-import org.opensearch.sql.ast.tree.Dedupe;
-import org.opensearch.sql.ast.tree.DescribeRelation;
-import org.opensearch.sql.ast.tree.Eval;
-import org.opensearch.sql.ast.tree.Filter;
-import org.opensearch.sql.ast.tree.Head;
-import org.opensearch.sql.ast.tree.Join;
-import org.opensearch.sql.ast.tree.Kmeans;
-import org.opensearch.sql.ast.tree.Parse;
-import org.opensearch.sql.ast.tree.Project;
-import org.opensearch.sql.ast.tree.RareAggregation;
-import org.opensearch.sql.ast.tree.RareTopN;
-import org.opensearch.sql.ast.tree.Relation;
-import org.opensearch.sql.ast.tree.Sort;
-import org.opensearch.sql.ast.tree.SubqueryAlias;
-import org.opensearch.sql.ast.tree.TopAggregation;
+import org.opensearch.sql.ast.tree.*;
 import org.opensearch.sql.ppl.utils.AggregatorTranslator;
 import org.opensearch.sql.ppl.utils.BuiltinFunctionTranslator;
 import org.opensearch.sql.ppl.utils.ComparatorTransformer;
@@ -296,6 +281,29 @@ public class CatalystQueryPlanVisitor extends AbstractNodeVisitor<LogicalPlan, C
         node.getChild().get(0).accept(this, context);
         return context.apply(p -> (LogicalPlan) Limit.apply(new org.apache.spark.sql.catalyst.expressions.Literal(
                 node.getSize(), DataTypes.IntegerType), p));
+    }
+
+    @Override
+    public LogicalPlan visitFillNull(FillNull fillNull, CatalystPlanContext context) {
+        fillNull.getChild().get(0).accept(this, context);
+        List<UnresolvedExpression> aliases = new ArrayList<>();
+        for(FillNull.NullableFieldFill nullableFieldFill : fillNull.getNullableFieldFills()) {
+            Field field = nullableFieldFill.getNullableFieldReference();
+            Literal replaceNullWithMe = nullableFieldFill.getReplaceNullWithMe();
+            Function coalesce = new Function("coalesce", of(field, replaceNullWithMe));
+            String fieldName = field.getField().toString();
+            Alias alias = new Alias(fieldName, coalesce);
+            aliases.add(alias);
+        }
+        if (context.getNamedParseExpressions().isEmpty()) {
+            // Create an UnresolvedStar for all-fields projection
+            context.getNamedParseExpressions().push(UnresolvedStar$.MODULE$.apply(Option.<Seq<String>>empty()));
+        }
+        List<Expression> expressionList = visitExpressionList(aliases, context);
+        Seq<NamedExpression> projectExpressions = context.retainAllNamedParseExpressions(p -> (NamedExpression) p);
+        // build the plan with the projection step
+        LogicalPlan apply = context.apply(p -> new org.apache.spark.sql.catalyst.plans.logical.Project(projectExpressions, p));
+        return Objects.requireNonNull(apply, "FillNull operation failed");
     }
 
     private void visitFieldList(List<Field> fieldList, CatalystPlanContext context) {
@@ -587,7 +595,10 @@ public class CatalystQueryPlanVisitor extends AbstractNodeVisitor<LogicalPlan, C
             return expression;
         }
 
-
+        @Override
+        public Expression visitFillNull(FillNull fillNull, CatalystPlanContext context) {
+            throw new IllegalStateException("Not Supported operation : FillNull");
+        }
 
         @Override
         public Expression visitInterval(Interval node, CatalystPlanContext context) {
