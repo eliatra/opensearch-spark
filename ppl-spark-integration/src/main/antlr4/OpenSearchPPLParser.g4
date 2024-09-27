@@ -45,6 +45,7 @@ commands
    | grokCommand
    | parseCommand
    | patternsCommand
+   | fillnullCommand
    ;
 
 searchCommand
@@ -144,6 +145,20 @@ patternsMethod
    : PUNCT
    | REGEX
    ;
+
+fillnullCommand
+   : FILLNULL ( VALUE EQUAL nullReplacement nullableField* )
+   | (nullableField EQUAL nullReplacement (COMMA nullableField EQUAL nullReplacement)*)
+   ;
+
+   nullableField
+   : fieldExpression
+   ;
+
+   nullReplacement
+   : literalValue
+   ;
+
 
 kmeansCommand
    : KMEANS (kmeansParameter)*
