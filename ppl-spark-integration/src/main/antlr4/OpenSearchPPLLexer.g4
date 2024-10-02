@@ -35,6 +35,7 @@ NEW_FIELD:                          'NEW_FIELD';
 KMEANS:                             'KMEANS';
 AD:                                 'AD';
 ML:                                 'ML';
+FLATTEN:                            'FLATTEN';
 
 //Native JOIN KEYWORDS
 JOIN:                               'JOIN';
@@ -81,7 +82,6 @@ AUTO:                               'AUTO';
 STR:                                'STR';
 IP:                                 'IP';
 NUM:                                'NUM';
-
 // ARGUMENT KEYWORDS
 KEEPEMPTY:                          'KEEPEMPTY';
 CONSECUTIVE:                        'CONSECUTIVE';

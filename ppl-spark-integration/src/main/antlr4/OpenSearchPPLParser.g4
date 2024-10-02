@@ -46,6 +46,7 @@ commands
    | parseCommand
    | patternsCommand
    | lookupCommand
+   | flattenCommand
    ;
 
 searchCommand
@@ -148,6 +149,10 @@ patternsCommand
    : PATTERNS (patternsParameter)* (source_field = expression)
    ;
 
+flattenCommand
+   : FLATTEN fieldExpression
+   ;
+
 patternsParameter
    : (NEW_FIELD EQUAL new_field = stringLiteral)
    | (PATTERN EQUAL pattern = stringLiteral)
@@ -157,6 +162,7 @@ patternsMethod
    : PUNCT
    | REGEX
    ;
+
 
 // lookup
 lookupCommand
@@ -1004,4 +1010,5 @@ keywordsCanBeId
    | SPARKLINE
    | C
    | DC
+   | FLATTEN
    ;
