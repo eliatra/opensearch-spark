@@ -20,6 +20,7 @@ import org.apache.spark.sql.catalyst.expressions.In$;
 import org.apache.spark.sql.catalyst.expressions.GreaterThanOrEqual;
 import org.apache.spark.sql.catalyst.expressions.InSubquery$;
 import org.apache.spark.sql.catalyst.expressions.LessThan;
+import org.apache.spark.sql.catalyst.expressions.LessThan;
 import org.apache.spark.sql.catalyst.expressions.LessThanOrEqual;
 import org.apache.spark.sql.catalyst.expressions.ListQuery$;
 import org.apache.spark.sql.catalyst.expressions.NamedExpression;
